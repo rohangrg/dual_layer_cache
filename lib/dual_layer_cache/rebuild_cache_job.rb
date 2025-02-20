@@ -1,11 +1,13 @@
-# app/jobs/rebuild_cache_job.rb
 class RebuildCacheJob < ActiveJob::Base
   queue_as :default
 
-  def perform(key, block)
-    # We need to evaluate the block somehow
-    # Since blocks can't be directly serialized, we'll assume it's stored elsewhere or passed differently
-    value = block.call # This assumes the block is somehow preserved (see notes below)
-    Rails.cache.write(key, value)
+  def perform(key, rebuilder)
+    if rebuilder.is_a?(Hash) && rebuilder[:klass] && rebuilder[:method]
+      klass = rebuilder[:klass].constantize
+      value = klass.send(rebuilder[:method])
+      Rails.cache.write(key, value)
+    else
+      Rails.logger.error("Invalid rebuilder provided for key: #{key}")
+    end
   end
 end

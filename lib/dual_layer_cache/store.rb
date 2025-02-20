@@ -15,23 +15,31 @@ module DualLayerCache
     end
 
     def fetch(key, options = nil, &block)
-      @@rebuilders[key] = options[:rebuilder] if options[:rebuilder]
-
+      options ||= {}
+      if options[:rebuilder]
+        if options[:rebuilder].is_a?(Method)
+          @@rebuilders[key] = { klass: options[:rebuilder].owner.to_s, method: options[:rebuilder].name }
+        else
+          @@rebuilders[key] = options[:rebuilder]
+        end
+      end
+    
       r1_key = normalize_key(key, options)
       value = @base_store.read(r1_key, options)
       return value if value
-
+    
       r2_key = "r2:#{normalize_key(key, options)}"
       value = @base_store.read(r2_key, options)
       if value
         RebuildCacheJob.perform_later(key, @@rebuilders[key]) if @@rebuilders[key]
         return value
       end
-
+    
       value = block.call
       write(key, value, options)
       value
     end
+    
 
     def write(key, value, options = nil)
       r1_key = normalize_key(key, options)
