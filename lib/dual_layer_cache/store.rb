@@ -1,59 +1,63 @@
 # lib/dual_layer_cache/store.rb
-module DualLayerCache
-  class Store < ActiveSupport::Cache::Store
-    @@rebuilders = {}
+require 'active_support/cache'
 
-    def initialize(base_store_options = {})
-      @base_store = ActiveSupport::Cache::RedisCacheStore.new(base_store_options)
-    end
+module ActiveSupport
+  module Cache
+    class DualLayerCacheStore < ActiveSupport::Cache::Store
+      @@rebuilders = {}
 
-    def fetch(key, options = nil, &block)
-      @@rebuilders[key] = options[:rebuilder] if options[:rebuilder]
-
-      r1_key = "r1:#{key}"
-      value = @base_store.read(r1_key, options)
-      return value if value
-
-      r2_key = "r2:#{key}"
-      value = @base_store.read(r2_key, options)
-      if value
-        RebuildCacheJob.perform_later(key, @@rebuilders[key]) if @@rebuilders[key]
-        return value
+      def initialize(base_store_options = {})
+        @base_store = ActiveSupport::Cache::RedisCacheStore.new(base_store_options)
       end
 
-      value = block.call
-      write(key, value, options)
-      value
-    end
+      def fetch(key, options = nil, &block)
+        @@rebuilders[key] = options[:rebuilder] if options[:rebuilder]
 
-    def write(key, value, options = nil)
-      r1_key = "r1:#{key}"
-      r2_key = "r2:#{key}"
-      @base_store.write(r1_key, value, options)
-      @base_store.write(r2_key, value, options)
-    end
+        r1_key = "r1:#{key}"
+        value = @base_store.read(r1_key, options)
+        return value if value
 
-    def read(key, options = nil)
-      r1_key = "r1:#{key}"
-      value = @base_store.read(r1_key, options)
-      return value if value
+        r2_key = "r2:#{key}"
+        value = @base_store.read(r2_key, options)
+        if value
+          RebuildCacheJob.perform_later(key, @@rebuilders[key]) if @@rebuilders[key]
+          return value
+        end
 
-      r2_key = "r2:#{key}"
-      @base_store.read(r2_key, options)
-    end
+        value = block.call
+        write(key, value, options)
+        value
+      end
 
-    def delete(key, options = nil)
-      r1_key = "r1:#{key}"
-      @base_store.delete(r1_key, options)
-    end
+      def write(key, value, options = nil)
+        r1_key = "r1:#{key}"
+        r2_key = "r2:#{key}"
+        @base_store.write(r1_key, value, options)
+        @base_store.write(r2_key, value, options)
+      end
 
-    def exist?(key, options = nil)
-      r1_key = "r1:#{key}"
-      @base_store.exist?(r1_key, options) || @base_store.exist?("r2:#{key}", options)
-    end
+      def read(key, options = nil)
+        r1_key = "r1:#{key}"
+        value = @base_store.read(r1_key, options)
+        return value if value
 
-    def clear(options = nil)
-      @base_store.redis.keys("r1:*").each { |k| @base_store.delete(k, options) }
+        r2_key = "r2:#{key}"
+        @base_store.read(r2_key, options)
+      end
+
+      def delete(key, options = nil)
+        r1_key = "r1:#{key}"
+        @base_store.delete(r1_key, options)
+      end
+
+      def exist?(key, options = nil)
+        r1_key = "r1:#{key}"
+        @base_store.exist?(r1_key, options) || @base_store.exist?("r2:#{key}", options)
+      end
+
+      def clear(options = nil)
+        @base_store.redis.keys("r1:*").each { |k| @base_store.delete(k, options) }
+      end
     end
   end
 end
