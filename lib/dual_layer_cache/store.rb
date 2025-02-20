@@ -16,6 +16,8 @@ module DualLayerCache
 
     def fetch(key, options = nil, &block)
       options ||= {}
+      options[:rebuilder] ||= block
+
       if options[:rebuilder]
         if options[:rebuilder].is_a?(Method)
           klass_name = options[:rebuilder].receiver.name
