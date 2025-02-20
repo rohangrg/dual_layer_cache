@@ -63,6 +63,8 @@ module DualLayerCache
       @base_store.redis.keys("r1:*").each { |k| @base_store.delete(k, options) }
     end
 
+    private
+
     # Normalize the key to include version if provided
     def normalize_key(key, options = nil)
       return "r1:#{key}" unless options && options[:version]
