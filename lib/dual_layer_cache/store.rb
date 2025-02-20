@@ -6,7 +6,7 @@ module DualLayerCache
     @@rebuilders = {}
 
     def initialize(base_store_options = {})
-      @base_store = ActiveSupport::Cache::RedisCacheStore.new(base_store_options)
+      @base_store = ActiveSupport::Cache::RedisCacheStore.new(**base_store_options)
     end
 
     # Indicate that this store supports cache versioning
