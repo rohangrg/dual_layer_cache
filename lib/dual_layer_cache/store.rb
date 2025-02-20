@@ -16,7 +16,7 @@ module DualLayerCache
 
     def fetch(key, options = nil, &block)
       options ||= {}
-      options[:rebuilder] ||= block
+      # options[:rebuilder] ||= block
 
       if options[:rebuilder]
         if options[:rebuilder].is_a?(Method)
