@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A dual-layer caching system for Rails using Redis."
   spec.description = "Provides a dual-layer caching strategy for Ruby on Rails with a primary (R1) and fallback (R2) cache in Redis, ensuring high availability and minimal downtime during cache invalidation."
-  spec.homepage = "https://github.com/rohangarg/dual_layer_cache" # Update if your GitHub username differs
+  spec.homepage = "https://github.com/rohangarg/dual_layer_cache"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
