@@ -18,7 +18,8 @@ module DualLayerCache
       options ||= {}
       if options[:rebuilder]
         if options[:rebuilder].is_a?(Method)
-          @@rebuilders[key] = { klass: options[:rebuilder].owner.to_s, method: options[:rebuilder].name }
+          klass_name = options[:rebuilder].receiver.name
+          @@rebuilders[key] = { klass: klass_name, method: options[:rebuilder].name }
         else
           @@rebuilders[key] = options[:rebuilder]
         end
@@ -39,6 +40,7 @@ module DualLayerCache
       write(key, value, options)
       value
     end
+    
     
 
     def write(key, value, options = nil)
