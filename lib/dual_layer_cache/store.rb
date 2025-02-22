@@ -72,11 +72,8 @@ module DualLayerCache
     end
 
     def clear(options = nil)
-      @base_store.redis.with do |conn|
-        conn.keys("r1:*").each { |k| @base_store.delete(k, options) }
-      end
+      @base_store.redis.keys("r1:*").each { |k| @base_store.delete(k, options) }
     end
-    
 
     private
 
